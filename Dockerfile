@@ -8,7 +8,7 @@ FROM hashicorp/terraform:${TERRAFORM_VERSION}
 # Updates the package list in the Alpine Linux base image.
 # Installs AWS CLI, jq (a lightweight and flexible command-line JSON processor), and zip (a compression utility).
 RUN apk update
-RUN apk add aws-cli jq zip unzip
+RUN apk add aws-cli jq zip unzip curl
 
 # Creates the /app directory if it does not already exist.
 # Sets the working directory to /app.

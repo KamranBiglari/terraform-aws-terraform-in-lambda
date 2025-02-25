@@ -11,11 +11,14 @@ resource "aws_ecr_repository" "this" {
 
 # Define Docker Image
 resource "docker_image" "this" {
-  name = "${aws_ecr_repository.my_ecr.repository_url}:${var.terraform_version}"
+  name = "${aws_ecr_repository.this[0].repository_url}:${var.terraform_version}-${formatdate("YYYYMMDDHHmmss", timestamp())}"
   build {
-    context    = "."
+    context    = "${path.module}/."
     dockerfile = "Dockerfile"
-    build_arg = {
+    tag = [
+      "${aws_ecr_repository.this[0].repository_url}:${var.terraform_version}"
+    ]
+    build_args = {
       TERRAFORM_VERSION = "${var.terraform_version}"
     }
   }
@@ -26,6 +29,26 @@ resource "docker_registry_image" "this" {
   keep_remotely = true
 }
 
+module "this__lambda_function_sg" {
+    source  = "terraform-aws-modules/security-group/aws"
+    version = "~> 5.0"
+    
+    count = var.function_create_sg ? 1 : 0
+    
+    name        = "${var.function_name}-sg"
+    description = "Security Group for Lambda function"
+    vpc_id      = var.function_vpc_id
+    
+    egress_with_cidr_blocks = [
+        {
+            from_port   = 0
+            to_port     = 0
+            protocol    = "-1"
+            cidr_blocks = ["0.0.0.0/0"]
+        }
+    ]
+}
+
 module "this__lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "~> 7.20"
@@ -33,6 +56,7 @@ module "this__lambda_function" {
   function_name = var.function_name
   description   = "Lambda function running Terraform in a Docker container"
   create_role   = var.create_role
+  create_package = false
 
   # ✅ Use Docker Image from ECR
   image_uri    = docker_image.this.name
@@ -46,9 +70,11 @@ module "this__lambda_function" {
   environment_variables = var.function_environment_variables
 
   # VPC Configuration
-  vpc_subnet_ids         = var.function_vpc.vpc_subnet_ids
-  vpc_security_group_ids = var.function_vpc.vpc_security_group_ids
-  attach_network_policy  = var.function_vpc.attach_network_policy
+  vpc_subnet_ids         = var.function_vpc_subnet_ids
+  vpc_security_group_ids = [module.this__lambda_function_sg[*].this_security_group_id]
+  attach_network_policy  = var.function_attach_network_policy
 
   attach_cloudwatch_logs_policy = true
+
+  depends_on = [ docker_registry_image.this ]
 }

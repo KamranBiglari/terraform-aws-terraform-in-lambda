@@ -1,6 +1,6 @@
 variable "terraform_version" {
   description = "The version of Terraform to use"
-  default     = "hashicorp/terraform:1.10"
+  default     = "1.10"
 }
 
 variable "create_ecr" {
@@ -28,16 +28,27 @@ variable "function_environment_variables" {
   default     = {}
 }
 
-variable "function_vpc" {
-  description = "values for the VPC configuration"
-  default = {
-    vpc_subnet_ids         = []
-    vpc_security_group_ids = []
-    attach_network_policy  = false
-  }
+variable "function_create_sg" {
+  description = "Create a Security Group for the Lambda function"
+  default     = false
+}
+
+variable "function_vpc_id" {
+  description = "The VPC ID for the Lambda function"
+  default     = ""
+}
+
+variable "function_attach_network_policy" {
+  description = "Attach a network policy to the Lambda function"
+  default     = false
+}
+
+variable "function_vpc_subnet_ids" {
+  description = "The VPC Subnet IDs for the Lambda function"
+  default     = []
 }
 
 variable "create_role" {
   description = "Create an IAM Role"
-  default     = false
+  default     = true
 }
