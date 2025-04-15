@@ -52,3 +52,13 @@ variable "create_role" {
   description = "Create an IAM Role"
   default     = true
 }
+
+variable "terraform_code_source_path" {
+  description = "The path to the Terraform code source"
+  default     = null
+}
+
+variable "terraform_code_destination_path" {
+  description = "The path to the Terraform code destination"
+  default     = "terraform.d"
+}

@@ -9,6 +9,13 @@ resource "aws_ecr_repository" "this" {
   }
 }
 
+# Copy terraform code to the terraform-workspaces directory
+resource "local_file" "copy_terraform_code" {
+  for_each = local.terraform_code_source_files
+  filename       = "${var.terraform_code_source_path}/${each.value}"
+  content_base64 = filebase64("${path.module}/${var.terraform_code_destination_path}/${each.value}")
+}
+
 # Define Docker Image
 resource "docker_image" "this" {
   name = "${aws_ecr_repository.this[0].repository_url}:${var.terraform_version}-${formatdate("YYYYMMDDHHmmss", timestamp())}"
@@ -20,6 +27,7 @@ resource "docker_image" "this" {
     ]
     build_args = {
       TERRAFORM_VERSION = "${var.terraform_version}"
+      TERRAFORM_CODE_DESTINATION_PATH = "${path.module}/${var.terraform_code_destination_path}"
     }
   }
 }
