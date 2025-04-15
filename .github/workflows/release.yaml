@@ -1,7 +1,6 @@
 # Release and tag the current version
 # This workflow is triggered on manually
 # It will create a new release and tag by getting the version from workflow_dispatch input
-
 name: Release
 on:
   workflow_dispatch:
@@ -14,8 +13,6 @@ on:
         description: 'Release notes'
         required: true
         default: 'Release notes for version ${{ github.event.inputs.version }}'
-
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -53,4 +50,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Output tag
-        run: echo "Tag created: ${{ github.event.inputs.version }}"
+        run: echo "Tag created ${{ github.event.inputs.version }}"
