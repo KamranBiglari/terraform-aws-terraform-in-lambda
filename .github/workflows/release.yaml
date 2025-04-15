@@ -37,13 +37,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Create tag
-        id: create_tag
-        run: |
-          git tag ${{ github.event.inputs.version }}
-          git push origin ${{ github.event.inputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
       - name: Output tag
         run: echo "Tag created ${{ github.event.inputs.version }}"
