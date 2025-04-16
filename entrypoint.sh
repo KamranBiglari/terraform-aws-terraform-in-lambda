@@ -20,8 +20,6 @@ while true; do
     exit 1
   fi
 
-  echo "📄 Received event: $EVENT"
-
   # Extract values from JSON event using `jq`
   BASE64_BACKEND_HCL=$(echo "$EVENT" | jq -r '.backend')
   TF_COMMAND=$(echo "$EVENT" | jq -r '.command')
@@ -149,20 +147,33 @@ while true; do
   echo "⚙️ Executing Terraform command: terraform $TF_COMMAND"
   case "$TF_COMMAND" in
     "init")
+      echo "🔄 Running Terraform init..."
       terraform init -backend-config=backend.hcl
       ;;
     "plan")
+      echo "🔄 Running Terraform init..."
       terraform init -backend-config=backend.hcl
+      echo "🔄 Running Terraform plan..."
       terraform plan
       ;;
     "apply")
+      echo "🔄 Running Terraform init..."
       terraform init -backend-config=backend.hcl
+      echo "🔄 Running Terraform apply..."
       terraform plan -out=tfplan
       terraform apply -auto-approve tfplan
       ;;
     "destroy")
+      echo "🔄 Running Terraform init..."
       terraform init -backend-config=backend.hcl
+      echo "🔄 Running Terraform destroy..."
       terraform destroy -auto-approve
+      ;;
+    "validate")
+      echo "🔄 Running Terraform init..."
+      terraform init -backend-config=backend.hcl
+      echo "🔄 Running Terraform validate..."
+      terraform validate
       ;;
     *)
       echo "❌ ERROR: Invalid Terraform command: $TF_COMMAND"
