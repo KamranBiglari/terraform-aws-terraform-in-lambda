@@ -20,6 +20,8 @@ while true; do
     exit 1
   fi
 
+  echo "📄 Received event: $EVENT"
+
   # Extract values from JSON event using `jq`
   BASE64_BACKEND_HCL=$(echo "$EVENT" | jq -r '.backend')
   TF_COMMAND=$(echo "$EVENT" | jq -r '.command')
@@ -40,11 +42,11 @@ while true; do
   # Set AWS Credentials ONLY if they exist in the payload
   if [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
     echo "🔑 Setting AWS Credentials from payload..."
-    export AWS_ACCESS_KEY_ID ${AWS_ACCESS_KEY_ID}
-    export AWS_SECRET_ACCESS_KEY ${AWS_SECRET_ACCESS_KEY}
-    export AWS_SESSION_TOKEN ${AWS_SESSION_TOKEN}
+    export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+    export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+    export AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"
   else
-    echo "🔒 No AWS credentials provided. Using IAM Role or default AWS credentials."
+    echo "🔒 No AWS credentials provided."
   fi
 
   # Extract optional Terraform variables in base64 format (optional)
@@ -56,9 +58,7 @@ while true; do
   if [ -n "$BASE64_ENVS" ]; then
       echo "🔧 Decoding and setting environment variables..."
       echo "$BASE64_ENVS" | base64 -d > /tmp/envs.sh
-      if [ "$DEBUG_LEVEL" = "true" ]; then
-        echo "🔧 Environment variables: $(cat /tmp/envs.sh)"
-      fi
+      
 
       # Read each line from the decoded env file
       while IFS= read -r line; do
@@ -78,6 +78,12 @@ while true; do
           # # Store the original key-value mapping for Terraform
           # ENV_MAPPING+=" \"$key=$value\""
       done < /tmp/envs.sh
+
+      if [ "$DEBUG_LEVEL" = "true" ]; then
+        echo "🔧 Environment variables: $(cat /tmp/envs.sh)"
+        printenv
+      fi
+
       # Cleanup
       rm -f /tmp/envs.sh
   fi
@@ -93,19 +99,19 @@ while true; do
       fi
   fi
 
-  # Decode and store Terraform variables (if provided)
-  if [ -n "$BASE64_TFVARS" ]; then
-    echo "🔧 Decoding Terraform variables..."
-    echo "$BASE64_TFVARS" | base64 -d > terraform.tfvars
-    if [ "$DEBUG_LEVEL" = "true" ]; then
-      echo "🔧 Terraform variables: $(cat terraform.tfvars)"
-    fi
-  fi
-
   # Prepare the workspace in /tmp
   WORKING_DIR="/tmp/terraform.d/"
   mkdir -p "$WORKING_DIR"
   cd "$WORKING_DIR"
+
+  # Decode and store Terraform variables (if provided)
+  if [ -n "$BASE64_TFVARS" ]; then
+    echo "🔧 Decoding Terraform variables..."
+    echo "$BASE64_TFVARS" | base64 -d > /tmp/terraform.d/terraform.tfvars
+    if [ "$DEBUG_LEVEL" = "true" ]; then
+      echo "🔧 Terraform variables: $(cat /tmp/terraform.d/terraform.tfvars)"
+    fi
+  fi
 
   # Decode and extract Terraform code
   BASE64_ZIPPED_TF_CODE=$(echo "$EVENT" | jq -r '.tf_code // empty')

@@ -1,6 +1,6 @@
 variable "terraform_version" {
   description = "The version of Terraform to use"
-  default     = "1.10"
+  default     = "1.11"
 }
 
 variable "create_ecr" {
@@ -20,7 +20,12 @@ variable "function_timeout" {
 
 variable "function_memory_size" {
   description = "The memory size for the Lambda function"
-  default     = 2048
+  default     = 4096
+}
+
+variable "ephemeral_storage_size" {
+  description = "The ephemeral storage size for the Lambda function"
+  default     = 4096
 }
 
 variable "function_environment_variables" {
