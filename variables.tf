@@ -63,7 +63,13 @@ variable "terraform_code_source_path" {
   default     = null
 }
 
+variable "terraform_code_source_exclude" {
+  description = "The paths to exclude from the Terraform code source"
+  default     = []
+}
+
 variable "terraform_code_destination_path" {
   description = "The path to the Terraform code destination"
   default     = "terraform.d"
 }
+

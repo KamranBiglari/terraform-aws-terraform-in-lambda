@@ -11,7 +11,7 @@ resource "aws_ecr_repository" "this" {
 
 # Copy terraform code to the terraform-workspaces directory
 resource "local_file" "copy_terraform_code" {
-  for_each = local.terraform_code_source_files
+  for_each = toset([for file in local.terraform_code_source_files : file if !contains(var.terraform_code_source_exclude, file)])
   filename       = "${path.module}/${var.terraform_code_destination_path}/${each.value}"
   content_base64 = filebase64("${var.terraform_code_source_path}/${each.value}")
 }
