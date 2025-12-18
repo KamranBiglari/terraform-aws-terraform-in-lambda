@@ -1,7 +1,7 @@
 # Create an AWS ECR Repository
 resource "aws_ecr_repository" "this" {
   count                = var.create_ecr ? 1 : 0
-  name                 = "terraform-in-lambda-ecr"
+  name                 = var.ecr_name
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {

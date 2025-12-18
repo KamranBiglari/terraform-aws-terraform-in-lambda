@@ -8,6 +8,11 @@ variable "create_ecr" {
   default     = true
 }
 
+variable "ecr_name" {
+  description = "The name of the ECR Repository"
+  default = "terraform-in-lambda-ecr"
+}
+
 variable "function_name" {
   description = "The name of the Lambda function"
   default     = "terraform-lambda-function"
