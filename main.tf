@@ -85,7 +85,7 @@ module "this__lambda_function" {
   attach_network_policy  = var.function_attach_network_policy
 
   attach_cloudwatch_logs_policy = true
-  cloudwatch_logs_retention_in_days = 30
+  cloudwatch_logs_retention_in_days = var.function_cloudwatch_logs_retention_in_days
 
   depends_on = [ docker_registry_image.this ]
 }
