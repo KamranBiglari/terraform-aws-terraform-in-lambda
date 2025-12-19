@@ -1,7 +1,7 @@
 # This Dockerfile sets up a Docker image for running Terraform with AWS CLI, jq, and zip installed.
 # 
 # This argument allows specifying the version of Terraform to use.
-ARG TERRAFORM_VERSION=1.10
+ARG TERRAFORM_VERSION=1.14
 ARG TERRAFORM_CODE_DESTINATION_PATH=terraform.d/ 
 # Uses the specified version of the official HashiCorp Terraform image as the base image.
 FROM hashicorp/terraform:${TERRAFORM_VERSION}
