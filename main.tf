@@ -38,6 +38,42 @@ resource "docker_registry_image" "this" {
   keep_remotely = true
 }
 
+# S3 Bucket for Terraform output (optional)
+resource "aws_s3_bucket" "terraform_output" {
+  count  = var.create_save_terraform_output_to_s3 ? 1 : 0
+  bucket = var.s3_bucket_name != "" ? var.s3_bucket_name : "${var.function_name}-terraform-output"
+}
+
+resource "aws_s3_bucket_versioning" "terraform_output" {
+  count  = var.create_save_terraform_output_to_s3 ? 1 : 0
+  bucket = aws_s3_bucket.terraform_output[0].id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_output" {
+  count  = var.create_save_terraform_output_to_s3 ? 1 : 0
+  bucket = aws_s3_bucket.terraform_output[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "terraform_output" {
+  count  = var.create_save_terraform_output_to_s3 ? 1 : 0
+  bucket = aws_s3_bucket.terraform_output[0].id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 module "this__lambda_function_sg" {
     source  = "terraform-aws-modules/security-group/aws"
     version = "~> 5.0"
@@ -77,7 +113,30 @@ module "this__lambda_function" {
   ephemeral_storage_size = var.ephemeral_storage_size
   
   # Environment Variables (Optional)
-  environment_variables = var.function_environment_variables
+  environment_variables = merge(
+    var.function_environment_variables,
+    local.save_to_s3 ? {
+      SAVE_OUTPUT_TO_S3 = "true"
+      S3_BUCKET_NAME    = local.s3_bucket_name
+      S3_KEY_PREFIX     = var.s3_key_prefix
+    } : {}
+  )
+
+  # S3 Output Policy
+  attach_policy_json = local.save_to_s3
+  policy_json = local.save_to_s3 ? jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl"
+        ]
+        Resource = "arn:aws:s3:::${local.s3_bucket_name}/${var.s3_key_prefix}/*"
+      }
+    ]
+  }) : null
 
   # VPC Configuration
   vpc_subnet_ids         = var.function_vpc_subnet_ids

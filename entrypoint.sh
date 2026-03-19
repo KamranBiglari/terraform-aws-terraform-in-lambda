@@ -1,6 +1,45 @@
 #!/bin/sh
 set -e  # Exit immediately if a command exits with a non-zero status
 
+# Function to capture command output and optionally save to S3
+run_and_capture() {
+  cmd_name="$1"
+  shift
+  output_file="/tmp/terraform_${cmd_name}_output.txt"
+
+  # Run command, capture output to file while still printing to stdout
+  set +e
+  "$@" > "$output_file" 2>&1
+  cmd_exit_code=$?
+  set -e
+
+  # Print output to stdout (for CloudWatch)
+  cat "$output_file"
+
+  # Upload to S3 if configured
+  if [ "$SAVE_OUTPUT_TO_S3" = "true" ] && [ -n "$S3_BUCKET_NAME" ]; then
+    timestamp=$(date -u +"%Y%m%dT%H%M%SZ")
+    s3_key="${S3_KEY_PREFIX}/${REQUEST_ID}/${cmd_name}_${timestamp}.txt"
+    echo "📤 Uploading ${cmd_name} output to s3://${S3_BUCKET_NAME}/${s3_key}"
+    aws s3 cp "$output_file" "s3://${S3_BUCKET_NAME}/${s3_key}" --quiet || echo "⚠️ Failed to upload output to S3"
+  fi
+
+  rm -f "$output_file"
+  return $cmd_exit_code
+}
+
+# Function to upload a file (e.g., binary tfplan) to S3
+upload_to_s3() {
+  local_path="$1"
+  s3_filename="$2"
+  if [ "$SAVE_OUTPUT_TO_S3" = "true" ] && [ -n "$S3_BUCKET_NAME" ] && [ -f "$local_path" ]; then
+    timestamp=$(date -u +"%Y%m%dT%H%M%SZ")
+    s3_key="${S3_KEY_PREFIX}/${REQUEST_ID}/${s3_filename}_${timestamp}"
+    echo "📤 Uploading ${s3_filename} to s3://${S3_BUCKET_NAME}/${s3_key}"
+    aws s3 cp "$local_path" "s3://${S3_BUCKET_NAME}/${s3_key}" --quiet || echo "⚠️ Failed to upload ${s3_filename} to S3"
+  fi
+}
+
 echo "🚀 Starting Terraform execution custom runtime inside AWS Lambda..."
 
 while true; do
@@ -133,14 +172,10 @@ while true; do
     echo "📝 Backend configuration: $(cat backend.hcl)"
   fi
 
-  # Initialize Terraform with backend
-  echo "🔄 Running Terraform init..."
-  terraform init -backend-config=backend.hcl
-
   # Debugging: List files in the working directory
   if [ "$DEBUG_LEVEL" = "true" ]; then
     echo "🔍 Debugging: Listing files in the working directory..."
-    ls -la /tmp/terraform.d/  # List files for debugging    
+    ls -la /tmp/terraform.d/  # List files for debugging
   fi
 
   # Execute Terraform command
@@ -148,32 +183,34 @@ while true; do
   case "$TF_COMMAND" in
     "init")
       echo "🔄 Running Terraform init..."
-      terraform init -backend-config=backend.hcl
+      run_and_capture "init" terraform init -backend-config=backend.hcl
       ;;
     "plan")
       echo "🔄 Running Terraform init..."
-      terraform init -backend-config=backend.hcl
+      run_and_capture "init" terraform init -backend-config=backend.hcl
       echo "🔄 Running Terraform plan..."
-      terraform plan
+      run_and_capture "plan" terraform plan -out=tfplan
+      upload_to_s3 "/tmp/terraform.d/tfplan" "tfplan"
       ;;
     "apply")
       echo "🔄 Running Terraform init..."
-      terraform init -backend-config=backend.hcl
+      run_and_capture "init" terraform init -backend-config=backend.hcl
       echo "🔄 Running Terraform apply..."
-      terraform plan -out=tfplan
-      terraform apply -auto-approve tfplan
+      run_and_capture "plan" terraform plan -out=tfplan
+      upload_to_s3 "/tmp/terraform.d/tfplan" "tfplan"
+      run_and_capture "apply" terraform apply -auto-approve tfplan
       ;;
     "destroy")
       echo "🔄 Running Terraform init..."
-      terraform init -backend-config=backend.hcl
+      run_and_capture "init" terraform init -backend-config=backend.hcl
       echo "🔄 Running Terraform destroy..."
-      terraform destroy -auto-approve
+      run_and_capture "destroy" terraform destroy -auto-approve
       ;;
     "validate")
       echo "🔄 Running Terraform init..."
-      terraform init -backend-config=backend.hcl
+      run_and_capture "init" terraform init -backend-config=backend.hcl
       echo "🔄 Running Terraform validate..."
-      terraform validate
+      run_and_capture "validate" terraform validate
       ;;
     *)
       echo "❌ ERROR: Invalid Terraform command: $TF_COMMAND"
@@ -183,8 +220,12 @@ while true; do
 
   echo "✅ Terraform execution completed successfully!"
 
-  # Prepare a response payload (you can customize this as needed)
-  RESPONSE_PAYLOAD='{"status": "success"}'
+  # Prepare a response payload
+  if [ "$SAVE_OUTPUT_TO_S3" = "true" ] && [ -n "$S3_BUCKET_NAME" ]; then
+    RESPONSE_PAYLOAD="{\"status\": \"success\", \"output_s3_bucket\": \"${S3_BUCKET_NAME}\", \"output_s3_prefix\": \"${S3_KEY_PREFIX}/${REQUEST_ID}/\"}"
+  else
+    RESPONSE_PAYLOAD='{"status": "success"}'
+  fi
 
   # Send the response back to Lambda
   echo "📤 Sending response for Request ID: $REQUEST_ID"

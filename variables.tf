@@ -83,3 +83,21 @@ variable "terraform_code_destination_path" {
   default     = "terraform.d"
 }
 
+variable "create_save_terraform_output_to_s3" {
+  description = "Create an S3 bucket for saving Terraform command output"
+  type        = bool
+  default     = false
+}
+
+variable "s3_bucket_name" {
+  description = "Name of an existing S3 bucket for Terraform output. Used when create_save_terraform_output_to_s3 is false."
+  type        = string
+  default     = ""
+}
+
+variable "s3_key_prefix" {
+  description = "S3 key prefix for Terraform output files"
+  type        = string
+  default     = "terraform-output"
+}
+
