@@ -2,10 +2,11 @@
 # 
 # This argument allows specifying the version of Terraform to use.
 ARG TERRAFORM_VERSION=1.14
-ARG TFPLAN2MD_VERSION=1.40.0
 ARG TERRAFORM_CODE_DESTINATION_PATH=terraform.d/
 # Uses the specified version of the official HashiCorp Terraform image as the base image.
 FROM hashicorp/terraform:${TERRAFORM_VERSION}
+
+ARG TFPLAN2MD_VERSION=1.40.0
 #
 # Updates the package list in the Alpine Linux base image.
 # Installs AWS CLI, jq (a lightweight and flexible command-line JSON processor), and zip (a compression utility).
