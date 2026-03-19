@@ -18,8 +18,7 @@ run_and_capture() {
 
   # Upload to S3 if configured
   if [ "$SAVE_OUTPUT_TO_S3" = "true" ] && [ -n "$S3_BUCKET_NAME" ]; then
-    timestamp=$(date -u +"%Y%m%dT%H%M%SZ")
-    s3_key="${S3_KEY_PREFIX}/${REQUEST_ID}/${cmd_name}_${timestamp}.txt"
+    s3_key="${S3_KEY_PREFIX}/${REQUEST_ID}/${cmd_name}.txt"
     echo "📤 Uploading ${cmd_name} output to s3://${S3_BUCKET_NAME}/${s3_key}"
     aws s3 cp "$output_file" "s3://${S3_BUCKET_NAME}/${s3_key}" --quiet || echo "⚠️ Failed to upload output to S3"
   fi
@@ -33,8 +32,7 @@ upload_to_s3() {
   local_path="$1"
   s3_filename="$2"
   if [ "$SAVE_OUTPUT_TO_S3" = "true" ] && [ -n "$S3_BUCKET_NAME" ] && [ -f "$local_path" ]; then
-    timestamp=$(date -u +"%Y%m%dT%H%M%SZ")
-    s3_key="${S3_KEY_PREFIX}/${REQUEST_ID}/${s3_filename}_${timestamp}"
+    s3_key="${S3_KEY_PREFIX}/${REQUEST_ID}/${s3_filename}"
     echo "📤 Uploading ${s3_filename} to s3://${S3_BUCKET_NAME}/${s3_key}"
     aws s3 cp "$local_path" "s3://${S3_BUCKET_NAME}/${s3_key}" --quiet || echo "⚠️ Failed to upload ${s3_filename} to S3"
   fi
