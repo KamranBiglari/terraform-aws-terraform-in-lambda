@@ -27,6 +27,17 @@ run_and_capture() {
   return $cmd_exit_code
 }
 
+# Function to convert tfplan to markdown and upload to S3
+generate_plan_markdown() {
+  if [ -f "/tmp/terraform.d/tfplan" ]; then
+    echo "📄 Generating markdown plan report..."
+    terraform show -json tfplan > /tmp/terraform.d/plan.json
+    tfplan2md /tmp/terraform.d/plan.json -o /tmp/terraform.d/plan.md --render-target github || echo "⚠️ Failed to generate markdown plan"
+    upload_to_s3 "/tmp/terraform.d/plan.md" "plan.md"
+    rm -f /tmp/terraform.d/plan.json /tmp/terraform.d/plan.md
+  fi
+}
+
 # Function to upload a file (e.g., binary tfplan) to S3
 upload_to_s3() {
   local_path="$1"
@@ -189,6 +200,7 @@ while true; do
       echo "🔄 Running Terraform plan..."
       run_and_capture "plan" terraform plan -out=tfplan
       upload_to_s3 "/tmp/terraform.d/tfplan" "tfplan"
+      generate_plan_markdown
       ;;
     "apply")
       echo "🔄 Running Terraform init..."
@@ -196,6 +208,7 @@ while true; do
       echo "🔄 Running Terraform apply..."
       run_and_capture "plan" terraform plan -out=tfplan
       upload_to_s3 "/tmp/terraform.d/tfplan" "tfplan"
+      generate_plan_markdown
       run_and_capture "apply" terraform apply -auto-approve tfplan
       ;;
     "destroy")

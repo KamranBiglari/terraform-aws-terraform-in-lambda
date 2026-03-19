@@ -2,7 +2,8 @@
 # 
 # This argument allows specifying the version of Terraform to use.
 ARG TERRAFORM_VERSION=1.14
-ARG TERRAFORM_CODE_DESTINATION_PATH=terraform.d/ 
+ARG TFPLAN2MD_VERSION=1.40.0
+ARG TERRAFORM_CODE_DESTINATION_PATH=terraform.d/
 # Uses the specified version of the official HashiCorp Terraform image as the base image.
 FROM hashicorp/terraform:${TERRAFORM_VERSION}
 #
@@ -10,6 +11,12 @@ FROM hashicorp/terraform:${TERRAFORM_VERSION}
 # Installs AWS CLI, jq (a lightweight and flexible command-line JSON processor), and zip (a compression utility).
 RUN apk update
 RUN apk add aws-cli jq zip unzip curl
+
+# Download and install tfplan2md for converting Terraform plans to markdown
+RUN wget -q "https://github.com/oocx/tfplan2md/releases/download/v${TFPLAN2MD_VERSION}/tfplan2md_${TFPLAN2MD_VERSION}_linux-musl-x64.tar.gz" -O /tmp/tfplan2md.tar.gz && \
+    tar -xzf /tmp/tfplan2md.tar.gz -C /usr/local/bin/ && \
+    chmod +x /usr/local/bin/tfplan2md && \
+    rm -f /tmp/tfplan2md.tar.gz
 
 # Creates the /app directory if it does not already exist.
 # Sets the working directory to /app.

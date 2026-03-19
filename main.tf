@@ -26,7 +26,8 @@ resource "docker_image" "this" {
       "${aws_ecr_repository.this[0].repository_url}:${var.terraform_version}-${local.current_time}"
     ]
     build_args = {
-      TERRAFORM_VERSION = "${var.terraform_version}"
+      TERRAFORM_VERSION               = "${var.terraform_version}"
+      TFPLAN2MD_VERSION               = "${var.tfplan2md_version}"
       TERRAFORM_CODE_DESTINATION_PATH = "${path.module}/${var.terraform_code_destination_path}/"
     }
   }

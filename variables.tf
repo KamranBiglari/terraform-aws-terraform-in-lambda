@@ -83,6 +83,12 @@ variable "terraform_code_destination_path" {
   default     = "terraform.d"
 }
 
+variable "tfplan2md_version" {
+  description = "The version of tfplan2md to install in the Docker image"
+  type        = string
+  default     = "1.40.0"
+}
+
 variable "create_save_terraform_output_to_s3" {
   description = "Create an S3 bucket for saving Terraform command output"
   type        = bool
