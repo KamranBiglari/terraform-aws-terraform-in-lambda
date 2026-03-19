@@ -120,6 +120,9 @@ module "this__lambda_function" {
       SAVE_OUTPUT_TO_S3 = "true"
       S3_BUCKET_NAME    = local.s3_bucket_name
       S3_KEY_PREFIX     = var.s3_key_prefix
+    } : {},
+    var.enable_tfplan2md ? {
+      ENABLE_TFPLAN2MD = "true"
     } : {}
   )
 

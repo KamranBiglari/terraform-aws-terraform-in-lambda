@@ -89,6 +89,12 @@ variable "tfplan2md_version" {
   default     = "1.40.0"
 }
 
+variable "enable_tfplan2md" {
+  description = "Enable generating markdown plan reports using tfplan2md"
+  type        = bool
+  default     = false
+}
+
 variable "create_save_terraform_output_to_s3" {
   description = "Create an S3 bucket for saving Terraform command output"
   type        = bool

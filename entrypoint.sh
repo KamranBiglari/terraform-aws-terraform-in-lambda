@@ -29,7 +29,7 @@ run_and_capture() {
 
 # Function to convert tfplan to markdown and upload to S3
 generate_plan_markdown() {
-  if [ -f "/tmp/terraform.d/tfplan" ]; then
+  if [ "$ENABLE_TFPLAN2MD" = "true" ] && [ -f "/tmp/terraform.d/tfplan" ]; then
     echo "📄 Generating markdown plan report..."
     terraform show -json tfplan > /tmp/terraform.d/plan.json
     tfplan2md /tmp/terraform.d/plan.json -o /tmp/terraform.d/plan.md --render-target github || echo "⚠️ Failed to generate markdown plan"
