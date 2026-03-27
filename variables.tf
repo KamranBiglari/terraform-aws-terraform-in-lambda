@@ -113,3 +113,9 @@ variable "s3_key_prefix" {
   default     = "terraform-output"
 }
 
+variable "s3_force_destroy" {
+  description = "S3 force destroy bucket"
+  type = bool
+  default = false
+}
+

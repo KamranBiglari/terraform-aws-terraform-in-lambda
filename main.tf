@@ -43,6 +43,7 @@ resource "docker_registry_image" "this" {
 resource "aws_s3_bucket" "terraform_output" {
   count  = var.create_save_terraform_output_to_s3 ? 1 : 0
   bucket = var.s3_bucket_name != "" ? var.s3_bucket_name : "${var.function_name}-terraform-output"
+  force_destroy = var.s3_force_destroy
 }
 
 resource "aws_s3_bucket_versioning" "terraform_output" {
