@@ -145,7 +145,7 @@ module "this__lambda_function" {
 
   # VPC Configuration
   vpc_subnet_ids         = var.function_vpc_subnet_ids
-  vpc_security_group_ids = var.function_create_sg ? [module.this__lambda_function_sg[0].this_security_group_id] : []
+  vpc_security_group_ids = var.function_create_sg ? [module.this__lambda_function_sg[0].security_group_id] : []
   attach_network_policy  = var.function_attach_network_policy
 
   attach_cloudwatch_logs_policy = true
