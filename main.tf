@@ -24,7 +24,6 @@ resource "docker_image" "this" {
     dockerfile = "Dockerfile"
     triggers = {
       terraform_version = var.terraform_version
-      tfplan2md_version = var.tfplan2md_version
       dockerfile_hash   = filemd5("${path.module}/Dockerfile")
       entrypoint_hash   = filemd5("${path.module}/entrypoint.sh")
     }
