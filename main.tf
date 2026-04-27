@@ -11,7 +11,7 @@ resource "aws_ecr_repository" "this" {
 
 # Copy terraform code to the terraform-workspaces directory
 resource "local_file" "copy_terraform_code" {
-  for_each = toset([for file in local.terraform_code_source_files : file if !contains(var.terraform_code_source_exclude, file)])
+  for_each       = toset([for file in local.terraform_code_source_files : file if !contains(var.terraform_code_source_exclude, file)])
   filename       = "${path.module}/${var.terraform_code_destination_path}/${each.value}"
   content_base64 = filebase64("${var.terraform_code_source_path}/${each.value}")
 }
@@ -22,11 +22,7 @@ resource "docker_image" "this" {
   build {
     context    = "${path.module}/."
     dockerfile = "Dockerfile"
-    triggers = {
-      terraform_version = var.terraform_version
-      dockerfile_hash   = filemd5("${path.module}/Dockerfile")
-      entrypoint_hash   = filemd5("${path.module}/entrypoint.sh")
-    }
+
     tag = [
       "${aws_ecr_repository.this[0].repository_url}:${var.terraform_version}-${local.current_time}"
     ]
@@ -36,7 +32,12 @@ resource "docker_image" "this" {
       TERRAFORM_CODE_DESTINATION_PATH = "${path.module}/${var.terraform_code_destination_path}/"
     }
   }
-  depends_on = [ local_file.copy_terraform_code ]
+  triggers = {
+    terraform_version = var.terraform_version
+    dockerfile_hash   = filemd5("${path.module}/Dockerfile")
+    entrypoint_hash   = filemd5("${path.module}/entrypoint.sh")
+  }
+  depends_on = [local_file.copy_terraform_code]
 }
 
 resource "docker_registry_image" "this" {
@@ -46,8 +47,8 @@ resource "docker_registry_image" "this" {
 
 # S3 Bucket for Terraform output (optional)
 resource "aws_s3_bucket" "terraform_output" {
-  count  = var.create_save_terraform_output_to_s3 ? 1 : 0
-  bucket = var.s3_bucket_name != "" ? var.s3_bucket_name : "${var.function_name}-terraform-output"
+  count         = var.create_save_terraform_output_to_s3 ? 1 : 0
+  bucket        = var.s3_bucket_name != "" ? var.s3_bucket_name : "${var.function_name}-terraform-output"
   force_destroy = var.s3_force_destroy
 }
 
@@ -82,32 +83,32 @@ resource "aws_s3_bucket_public_access_block" "terraform_output" {
 }
 
 module "this__lambda_function_sg" {
-    source  = "terraform-aws-modules/security-group/aws"
-    version = "~> 5.0"
-    
-    count = var.function_create_sg ? 1 : 0
-    
-    name        = "${var.function_name}-sg"
-    description = "Security Group for Lambda function"
-    vpc_id      = var.function_vpc_id
-    
-    egress_with_cidr_blocks = [
-        {
-            from_port   = 0
-            to_port     = 0
-            protocol    = "-1"
-            cidr_blocks = "0.0.0.0/0"
-        }
-    ]
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.0"
+
+  count = var.function_create_sg ? 1 : 0
+
+  name        = "${var.function_name}-sg"
+  description = "Security Group for Lambda function"
+  vpc_id      = var.function_vpc_id
+
+  egress_with_cidr_blocks = [
+    {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = "0.0.0.0/0"
+    }
+  ]
 }
 
 module "this__lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "~> 7.20"
 
-  function_name = var.function_name
-  description   = "Lambda function running Terraform in a Docker container"
-  create_role   = var.create_role
+  function_name  = var.function_name
+  description    = "Lambda function running Terraform in a Docker container"
+  create_role    = var.create_role
   create_package = false
 
   # Use Docker Image from ECR
@@ -115,10 +116,10 @@ module "this__lambda_function" {
   package_type = "Image"
 
   # Optional - Set Memory & Timeout
-  memory_size = var.function_memory_size
-  timeout     = var.function_timeout
+  memory_size            = var.function_memory_size
+  timeout                = var.function_timeout
   ephemeral_storage_size = var.ephemeral_storage_size
-  
+
   # Environment Variables (Optional)
   environment_variables = merge(
     var.function_environment_variables,
@@ -153,8 +154,8 @@ module "this__lambda_function" {
   vpc_security_group_ids = var.function_create_sg ? [module.this__lambda_function_sg[0].security_group_id] : []
   attach_network_policy  = var.function_attach_network_policy
 
-  attach_cloudwatch_logs_policy = true
+  attach_cloudwatch_logs_policy     = true
   cloudwatch_logs_retention_in_days = var.function_cloudwatch_logs_retention_in_days
 
-  depends_on = [ docker_registry_image.this ]
+  depends_on = [docker_registry_image.this]
 }
