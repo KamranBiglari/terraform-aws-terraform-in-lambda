@@ -18,7 +18,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v4
 
-      - name: terraform validate
+      - name: Terraform validate
         run: |
           terraform init -backend=false
           terraform validate
