@@ -22,6 +22,12 @@ resource "docker_image" "this" {
   build {
     context    = "${path.module}/."
     dockerfile = "Dockerfile"
+    triggers = {
+      terraform_version = var.terraform_version
+      tfplan2md_version = var.tfplan2md_version
+      dockerfile_hash   = filemd5("${path.module}/Dockerfile")
+      entrypoint_hash   = filemd5("${path.module}/entrypoint.sh")
+    }
     tag = [
       "${aws_ecr_repository.this[0].repository_url}:${var.terraform_version}-${local.current_time}"
     ]

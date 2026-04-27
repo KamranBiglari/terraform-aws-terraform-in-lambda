@@ -7,11 +7,29 @@ ARG TERRAFORM_CODE_DESTINATION_PATH=terraform.d/
 FROM hashicorp/terraform:${TERRAFORM_VERSION}
 
 ARG TFPLAN2MD_VERSION=1.40.0
-#
-# Updates the package list in the Alpine Linux base image.
-# Installs AWS CLI, jq (a lightweight and flexible command-line JSON processor), and zip (a compression utility).
-RUN apk update
-RUN apk add aws-cli jq zip unzip curl
+
+# Pinned Alpine repo + package versions for reproducible builds.
+# Bump these intentionally; do not let them float.
+ARG ALPINE_VERSION=3.21
+ARG AWS_CLI_VERSION=2.22.10-r0
+ARG JQ_VERSION=1.7.1-r0
+ARG ZIP_VERSION=3.0-r13
+ARG UNZIP_VERSION=6.0-r15
+ARG CURL_VERSION=8.14.1-r2
+ARG DOS2UNIX_VERSION=7.5.2-r0
+
+RUN printf '%s\n' \
+      "https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main" \
+      "https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/community" \
+      > /etc/apk/repositories && \
+    apk update && apk upgrade --no-cache && \
+    apk add --no-cache \
+      aws-cli=${AWS_CLI_VERSION} \
+      jq=${JQ_VERSION} \
+      zip=${ZIP_VERSION} \
+      unzip=${UNZIP_VERSION} \
+      curl=${CURL_VERSION} \
+      dos2unix=${DOS2UNIX_VERSION}
 
 # Download and install tfplan2md for converting Terraform plans to markdown
 RUN wget -q "https://github.com/oocx/tfplan2md/releases/download/v${TFPLAN2MD_VERSION}/tfplan2md_${TFPLAN2MD_VERSION}_linux-musl-x64.tar.gz" -O /tmp/tfplan2md.tar.gz && \
@@ -29,8 +47,7 @@ COPY ${TERRAFORM_CODE_DESTINATION_PATH} /usr/local/src/
 # Copies the entrypoint.sh script from the local machine to the /app directory in the container.
 # Makes the entrypoint.sh script executable.
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-RUN apk add dos2unix && dos2unix /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && dos2unix /app/entrypoint.sh
 
 
 # Sets the entrypoint of the container to the entrypoint.sh script.
