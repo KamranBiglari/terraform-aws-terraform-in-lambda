@@ -16,6 +16,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - uses: hashicorp/setup-terraform@v4
+
+      - name: terraform validate
+        run: |
+          terraform init -backend=false
+          terraform validate
+
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
