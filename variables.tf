@@ -10,7 +10,7 @@ variable "create_ecr" {
 
 variable "ecr_name" {
   description = "The name of the ECR Repository"
-  default = "terraform-in-lambda-ecr"
+  default     = "terraform-in-lambda-ecr"
 }
 
 variable "function_name" {
@@ -60,7 +60,7 @@ variable "function_vpc_subnet_ids" {
 
 variable "function_cloudwatch_logs_retention_in_days" {
   description = "Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, and 3653."
-  default = 30
+  default     = 30
 }
 
 variable "create_role" {
@@ -115,7 +115,7 @@ variable "s3_key_prefix" {
 
 variable "s3_force_destroy" {
   description = "S3 force destroy bucket"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
