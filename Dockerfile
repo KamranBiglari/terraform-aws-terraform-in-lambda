@@ -6,7 +6,7 @@ ARG TERRAFORM_CODE_DESTINATION_PATH=terraform.d/
 # Uses the specified version of the official HashiCorp Terraform image as the base image.
 FROM hashicorp/terraform:${TERRAFORM_VERSION}
 
-ARG TFPLAN2MD_VERSION=1.40.0
+ARG TFPLAN2MD_VERSION=1.42.0
 
 # Pinned Alpine repo + package versions for reproducible builds.
 # Bump these intentionally; do not let them float.
