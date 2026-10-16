@@ -22,6 +22,10 @@ resource "docker_image" "this" {
   build {
     context    = "${path.module}/."
     dockerfile = "Dockerfile"
+    platform   = "linux/amd64"
+    # buildx (provider default since v4) attaches provenance attestations, producing an
+    # image index that Lambda rejects; the legacy builder emits a plain single-arch manifest.
+    use_legacy_builder = true
 
     tag = [
       "${aws_ecr_repository.this[0].repository_url}:${var.terraform_version}-${local.current_time}"
