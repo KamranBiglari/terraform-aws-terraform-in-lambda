@@ -10,13 +10,13 @@ ARG TFPLAN2MD_VERSION=1.42.0
 
 # Pinned Alpine repo + package versions for reproducible builds.
 # Bump these intentionally; do not let them float.
-ARG ALPINE_VERSION=3.21
-ARG AWS_CLI_VERSION=2.22.10-r0
-ARG JQ_VERSION=1.7.1-r0
+ARG ALPINE_VERSION=3.23
+ARG AWS_CLI_VERSION=2.32.7-r0
+ARG JQ_VERSION=1.8.2-r0
 ARG ZIP_VERSION=3.0-r13
-ARG UNZIP_VERSION=6.0-r15
-ARG CURL_VERSION=8.14.1-r2
-ARG DOS2UNIX_VERSION=7.5.2-r0
+ARG UNZIP_VERSION=6.0-r16
+ARG CURL_VERSION=8.22.0-r0
+ARG DOS2UNIX_VERSION=7.5.3-r0
 
 RUN printf '%s\n' \
       "https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main" \
