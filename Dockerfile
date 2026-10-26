@@ -8,28 +8,17 @@ FROM hashicorp/terraform:${TERRAFORM_VERSION}
 
 ARG TFPLAN2MD_VERSION=1.42.0
 
-# Pinned Alpine repo + package versions for reproducible builds.
-# Bump these intentionally; do not let them float.
-ARG ALPINE_VERSION=3.23
-ARG AWS_CLI_VERSION=2.32.7-r0
-ARG JQ_VERSION=1.8.2-r0
-ARG ZIP_VERSION=3.0-r13
-ARG UNZIP_VERSION=6.0-r16
-ARG CURL_VERSION=8.22.0-r0
-ARG DOS2UNIX_VERSION=7.5.3-r0
-
-RUN printf '%s\n' \
-      "https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main" \
-      "https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/community" \
-      > /etc/apk/repositories && \
-    apk update && apk upgrade --no-cache && \
+# Packages come from the base image's own Alpine release, which is fixed by TERRAFORM_VERSION.
+# They are deliberately not pinned to exact versions: Alpine repos keep only the latest
+# revision of each package, so exact pins break whenever a security fix is published.
+RUN apk upgrade --no-cache && \
     apk add --no-cache \
-      aws-cli=${AWS_CLI_VERSION} \
-      jq=${JQ_VERSION} \
-      zip=${ZIP_VERSION} \
-      unzip=${UNZIP_VERSION} \
-      curl=${CURL_VERSION} \
-      dos2unix=${DOS2UNIX_VERSION}
+      aws-cli \
+      jq \
+      zip \
+      unzip \
+      curl \
+      dos2unix
 
 # Download and install tfplan2md for converting Terraform plans to markdown
 RUN wget -q "https://github.com/oocx/tfplan2md/releases/download/v${TFPLAN2MD_VERSION}/tfplan2md_${TFPLAN2MD_VERSION}_linux-musl-x64.tar.gz" -O /tmp/tfplan2md.tar.gz && \
